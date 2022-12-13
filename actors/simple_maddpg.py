@@ -93,7 +93,7 @@ class SimpleMADDPGModel(Model):
     @classmethod
     def load(cls, model_id, version_number, model_user_data, version_user_data, model_data_f):
         # Create the model instance
-        model = SimpleDQNModel(
+        model = SimpleMADDPGModel(
             model_id=model_id,
             version_number=version_number,
             environment_implementation=model_user_data["environment_implementation"],
@@ -114,7 +114,7 @@ class SimpleMADDPGModel(Model):
         return model
 
 
-class SimpleDQNActor:
+class SimpleMADDPGActor:
     def __init__(self, _cfg):
         self._dtype = torch.float
 
@@ -135,7 +135,7 @@ class SimpleDQNActor:
         rng = np.random.default_rng(config.seed if config.seed is not None else 0)
 
         model, _, _ = await actor_session.model_registry.retrieve_version(
-            SimpleDQNModel, config.model_id, config.model_version
+            SimpleMADDPGModel, config.model_id, config.model_version
         )
         model.network.eval()
 
@@ -155,7 +155,7 @@ class SimpleDQNActor:
                     and actor_session.get_tick_id() % config.model_update_frequency == 0
                 ):
                     model, _, _ = await actor_session.model_registry.retrieve_version(
-                        SimpleDQNModel, config.model_id, config.model_version
+                        SimpleMADDPGModel, config.model_id, config.model_version
                     )
                     model.network.eval()
                 if rng.random() < model.epsilon:
@@ -181,7 +181,7 @@ class SimpleDQNActor:
                 actor_session.do_action(PlayerAction(value=action_value))
 
 
-class SimpleDQNTraining:
+class SimpleMADDPGTraining:
     default_cfg = {
         "seed": 10,
         "num_trials": 5000,
@@ -267,7 +267,7 @@ class SimpleDQNTraining:
             self._cfg.epsilon_schedule_duration_ratio * self._cfg.num_trials,
         )
 
-        model = SimpleDQNModel(
+        model = SimpleMADDPGModel(
             model_id,
             environment_implementation=self._environment_specs.implementation,
             num_input=flattened_dimensions(self._environment_specs.observation_space),
@@ -324,7 +324,7 @@ class SimpleDQNTraining:
                                 cog_settings,
                                 name="player",
                                 class_name=PLAYER_ACTOR_CLASS,
-                                implementation="actors.simple_dqn.SimpleDQNActor",
+                                implementation="actors.simple_dqn.SimpleMADDPGActor",
                                 config=AgentConfig(
                                     run_id=run_session.run_id,
                                     seed=self._cfg.seed + trial_idx,
@@ -357,7 +357,7 @@ class SimpleDQNTraining:
                     run_session.log_metrics(total_reward_avg=total_reward_avg)
                     total_reward_cum = 0
                     log.info(
-                        f"[SimpleDQN/{run_session.run_id}] trial #{trial_idx + 1}/{self._cfg.num_trials} done (average total reward = {total_reward_avg})."
+                        f"[SimpleMADDPG/{run_session.run_id}] trial #{trial_idx + 1}/{self._cfg.num_trials} done (average total reward = {total_reward_avg})."
                     )
 
             if (
@@ -408,7 +408,7 @@ class SimpleDQNTraining:
         version_info = await run_session.model_registry.publish_version(model, archived=True)
 
 
-class SimpleDQNSelfPlayTraining:
+class SimpleMADDPGSelfPlayTraining:
     default_cfg = {
         "seed": 10,
         "num_epochs": 50,
@@ -521,7 +521,7 @@ class SimpleDQNSelfPlayTraining:
             self._cfg.epsilon_schedule_duration_ratio * self._cfg.num_epochs * self._cfg.epoch_num_training_trials,
         )
 
-        model = SimpleDQNModel(
+        model = SimpleMADDPGModel(
             model_id,
             environment_implementation=self._environment_specs.implementation,
             num_input=flattened_dimensions(self._environment_specs.observation_space),
@@ -573,7 +573,7 @@ class SimpleDQNSelfPlayTraining:
                 cog_settings,
                 name=name,
                 class_name=PLAYER_ACTOR_CLASS,
-                implementation="actors.simple_dqn.SimpleDQNActor"
+                implementation="actors.simple_dqn.SimpleMADDPGActor"
                 if version_number is not None
                 else "actors.random_actor.RandomActor",
                 config=AgentConfig(
@@ -735,7 +735,7 @@ class SimpleDQNSelfPlayTraining:
                     reference_version_number=previous_epoch_version_number,
                 )
             log.info(
-                f"[SimpleDQN/{run_session.run_id}] epoch #{epoch_idx + 1}/{self._cfg.num_epochs} done - "
+                f"[SimpleMADDPG/{run_session.run_id}] epoch #{epoch_idx + 1}/{self._cfg.num_epochs} done - "
                 + f"[{model.model_id}@v{validation_version_number}] avg total reward = {avg_total_reward}, ties ratio = {ties_ratio}"
             )
             previous_epoch_version_number = validation_version_number
