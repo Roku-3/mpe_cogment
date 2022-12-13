@@ -7,7 +7,6 @@ from cogment_verse.specs import (
     encode_rendered_frame,
     EnvironmentSpecs,
     Observation,
-    SpaceMask,
     space_from_gym_space,
     gym_action_from_action,
     observation_from_gym_observation,
@@ -32,18 +31,15 @@ class Environment:
                 observation_space = pz_env.observation_space(player)
                 action_space = pz_env.action_space(player)
             else:
-                if observation_space != pz_env.observation_space(player) or action_space != pz_env.action_space(player):
-                    raise RuntimeError(
-                        "Petting zoo environment with heterogeneous action/observation spaces are not supported yet"
-                    )
+                pass
 
         assert num_players >= 1
 
         self.env_specs = EnvironmentSpecs(
             num_players=num_players,
-            observation_space=space_from_gym_space(observation_space["observation"]),
+            observation_space=space_from_gym_space(observation_space),
             action_space=space_from_gym_space(action_space),
-            turn_based = False
+            turn_based=False,
         )
 
     def get_implementation_name(self):
@@ -119,11 +115,6 @@ class Environment:
             if event.actions:
                 player_action_value = event.actions[current_player_actor_idx].action.value
                 action_value = player_action_value
-                # overridden_players = []
-                # if has_teacher and event.actions[teacher_actor_idx].action.HasField("value"):
-                #     teacher_action_value = event.actions[teacher_actor_idx].action.value
-                #     action_value = teacher_action_value
-                #     overridden_players = [player_actor_name]
 
                 gym_action = gym_action_from_action(
                     self.env_specs.action_space, action_value  # pylint: disable=no-member

@@ -1,0 +1,3 @@
+simple_maddpg:
+  class_name: actors.simple_maddpg.SimpleMADDPGActor
+  port: ${generate_port:actors.simple_maddpg.SimpleMADDPGActor}
