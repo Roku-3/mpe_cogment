@@ -21,6 +21,7 @@ import {
   GymLunarLanderContinuousEnvironments,
 } from "./GymLunarLanderContinuousControls";
 import { ConnectFourControls, ConnectFourEnvironments } from "./ConnectFourControls";
+import { SimpleTagControls, SimpleTagEnvironments } from "./SimpleTagControls";
 import { GymCartPoleEnvironments, GymCartPoleControls } from "./GymCartPoleControls";
 import { GymMountainCarEnvironments, GymMountainCarControls } from "./GymMountainCarControls";
 import { AtariPitfallEnvironments, AtariPitfallControls } from "./AtariPitfallControls";
@@ -35,6 +36,7 @@ const CONTROLS = [
   { environments: AtariPitfallEnvironments, component: AtariPitfallControls },
   { environments: TetrisEnvironments, component: TetrisControls },
   { environments: ConnectFourEnvironments, component: ConnectFourControls },
+  { environments: SimpleTagEnvironments, component: SimpleTagControls },
 ];
 
 export const Controls = ({ environment, actorClass, sendAction, fps, turnBased, observation }) => {
