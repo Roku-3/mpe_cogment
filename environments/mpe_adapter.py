@@ -20,7 +20,7 @@ class Environment:
     def __init__(self, cfg):
         self.env_class_name = cfg.env_class_name
         self.env_class = import_class(self.env_class_name)
-        pz_env = self.env_class.env()
+        pz_env = self.env_class.env(num_good=1, num_adversaries=1, num_obstacles=0, continuous_actions=False)
 
         num_players = 0
         observation_space = None
@@ -57,14 +57,6 @@ class Environment:
         ]
         assert len(player_actors) == self.env_specs.num_players  # pylint: disable=no-member
 
-        # No support for teachers
-        teacher_actors = [
-            (actor_idx, actor.actor_name)
-            for (actor_idx, actor) in enumerate(actors)
-            if actor.actor_class_name == TEACHER_ACTOR_CLASS
-        ]
-        assert len(teacher_actors) == 0
-
         session_cfg = environment_session.config
 
         pz_env = self.env_class.env()
@@ -79,7 +71,8 @@ class Environment:
             current_player_actor_idx, current_player_actor_name = next(
                 (player_actor_idx, player_actor_name)
                 for (player_pz_agent, (player_actor_idx, player_actor_name)) in zip(pz_env.agents, player_actors)
-                if player_pz_agent == current_player_pz_agent
+                # if player_pz_agent == current_player_pz_agent
+                if True
             )
             return (current_player_pz_agent, current_player_actor_idx, current_player_actor_name)
 
@@ -88,7 +81,7 @@ class Environment:
         pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
 
         observation_value = observation_from_gym_observation(
-            pz_env.observation_space(current_player_pz_agent)["observation"], pz_observation["observation"]
+            pz_env.observation_space(current_player_pz_agent), pz_observation
         )
 
         rendered_frame = None
@@ -126,7 +119,7 @@ class Environment:
                 pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
 
                 observation_value = observation_from_gym_observation(
-                    pz_env.observation_space(current_player_pz_agent)["observation"], pz_observation["observation"]
+                    pz_env.observation_space(current_player_pz_agent), pz_observation
                 )
 
                 rendered_frame = None
@@ -152,7 +145,8 @@ class Environment:
                         for (player_pz_agent, (player_actor_idx, player_actor_name)) in zip(
                             pz_env.agents, player_actors
                         )
-                        if player_pz_agent == rewarded_player_pz_agent
+                        # if player_pz_agent == rewarded_player_pz_agent
+                        if True
                     )
                     environment_session.add_reward(
                         value=pz_reward,

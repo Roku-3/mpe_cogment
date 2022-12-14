@@ -324,7 +324,7 @@ class SimpleMADDPGTraining:
                                 cog_settings,
                                 name="player",
                                 class_name=PLAYER_ACTOR_CLASS,
-                                implementation="actors.simple_dqn.SimpleMADDPGActor",
+                                implementation="actors.simple_maddpg.SimpleMADDPGActor",
                                 config=AgentConfig(
                                     run_id=run_session.run_id,
                                     seed=self._cfg.seed + trial_idx,
@@ -573,7 +573,7 @@ class SimpleMADDPGSelfPlayTraining:
                 cog_settings,
                 name=name,
                 class_name=PLAYER_ACTOR_CLASS,
-                implementation="actors.simple_dqn.SimpleMADDPGActor"
+                implementation="actors.simple_maddpg.SimpleMADDPGActor"
                 if version_number is not None
                 else "actors.random_actor.RandomActor",
                 config=AgentConfig(
@@ -735,7 +735,7 @@ class SimpleMADDPGSelfPlayTraining:
                     reference_version_number=previous_epoch_version_number,
                 )
             log.info(
-                f"[SimpleMADDPG/{run_session.run_id}] epoch #{epoch_idx + 1}/{self._cfg.num_epochs} done - "
+                f"[SimpleDQN/{run_session.run_id}] epoch #{epoch_idx + 1}/{self._cfg.num_epochs} done - "
                 + f"[{model.model_id}@v{validation_version_number}] avg total reward = {avg_total_reward}, ties ratio = {ties_ratio}"
             )
             previous_epoch_version_number = validation_version_number
