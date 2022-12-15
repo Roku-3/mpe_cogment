@@ -5,7 +5,7 @@ defaults:
       - random
   - override /services/environment: simple_tag
 run:
-  class_name: actors.simple_maddpg.SimpleMADDPGSelfPlayTraining
+  class_name: actors.simple_maddpg.SimpleMADDPGTraining
   seed: 618
   num_epochs: 75
   epoch_num_training_trials: 200

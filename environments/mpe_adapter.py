@@ -20,7 +20,10 @@ class Environment:
     def __init__(self, cfg):
         self.env_class_name = cfg.env_class_name
         self.env_class = import_class(self.env_class_name)
-        pz_env = self.env_class.env(num_good=1, num_adversaries=1, num_obstacles=0, continuous_actions=False)
+        pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
+
+        # log.warning(pz_env.observation_spaces)
+        log.warning(pz_env.observation_space("agent_0").shape)
 
         num_players = 0
         observation_space = None
@@ -30,8 +33,6 @@ class Environment:
             if observation_space is None:
                 observation_space = pz_env.observation_space(player)
                 action_space = pz_env.action_space(player)
-            else:
-                pass
 
         assert num_players >= 1
 
@@ -41,6 +42,7 @@ class Environment:
             action_space=space_from_gym_space(action_space),
             turn_based=False,
         )
+        # log.warning(self.env_specs.observation_space)
 
     def get_implementation_name(self):
         return self.env_class_name
@@ -80,8 +82,11 @@ class Environment:
 
         pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
 
+        log.warning(f"pz_observation: {pz_observation}")
+        log.warning(f"observation_space: {pz_env.observation_space(current_player_pz_agent)}")
+
         observation_value = observation_from_gym_observation(
-            pz_env.observation_space(current_player_pz_agent), pz_observation
+            pz_env.observation_space(current_player_pz_agent), pz_observation[:4]
         )
 
         rendered_frame = None
