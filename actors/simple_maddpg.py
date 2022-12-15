@@ -15,7 +15,6 @@ from cogment_verse.specs import (
     EnvironmentConfig,
     flatten,
     flattened_dimensions,
-    flatten_mask,
     PLAYER_ACTOR_CLASS,
     PlayerAction,
     SpaceValue,
@@ -159,24 +158,12 @@ class SimpleMADDPGActor:
                     )
                     model.network.eval()
                 if rng.random() < model.epsilon:
-                    [action_value] = sample_space(action_space, rng=rng, mask=event.observation.observation.action_mask)
+                    [action_value] = sample_space(action_space, rng=rng)
                 else:
                     obs_tensor = torch.tensor(
                         flatten(observation_space, event.observation.observation.value), dtype=self._dtype
                     )
                     action_probs = model.network(obs_tensor)
-                    if event.observation.observation.HasField("action_mask"):
-                        action_mask = torch.tensor(
-                            flatten_mask(action_space, event.observation.observation.action_mask), dtype=self._dtype
-                        )
-                        large = torch.finfo(self._dtype).max
-                        if torch.equal(action_mask, torch.zeros_like(action_mask)):
-                            log.info("no moves are available, this shouldn't be possible")
-                        action_probs = action_probs - large * (1 - action_mask)
-                    discrete_action_tensor = torch.argmax(action_probs)
-                    action_value = SpaceValue(
-                        properties=[SpaceValue.PropertyValue(discrete=discrete_action_tensor.item())]
-                    )
 
                 actor_session.do_action(PlayerAction(value=action_value))
 
