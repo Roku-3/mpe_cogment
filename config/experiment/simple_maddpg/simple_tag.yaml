@@ -10,7 +10,7 @@ run:
   num_epochs: 75
   epoch_num_training_trials: 200
   epoch_num_validation_trials: 20
-  num_parallel_trials: 10
+  num_parallel_trials: 7
   learning_starts: ${run.batch_size}
   learning_rate: 0.0005
   discount_factor: 0.99

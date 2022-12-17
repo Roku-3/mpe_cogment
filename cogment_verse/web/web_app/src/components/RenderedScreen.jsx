@@ -22,7 +22,7 @@ function bufferToBase64(buf) {
       return String.fromCharCode(ch);
     })
     .join("");
-  return btoa(binstr);
+  return window.btoa(binstr);
 }
 
 const DEFAULT_SCREEN_SRC = `${process.env.PUBLIC_URL}/assets/cogment-splash.png`;
@@ -40,8 +40,10 @@ export const RenderedScreen = ({ observation, overlay, className, ...props }) =>
     if (!renderedFrame) {
       return;
     }
+    // console.log(renderedFrame)
 
     canvas.src = "data:image/png;base64," + bufferToBase64(renderedFrame);
+    console.log("srcccc:" + canvas.src)
   }, [canvasRef, observation]);
 
   return (

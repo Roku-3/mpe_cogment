@@ -2,6 +2,7 @@ from enum import Enum
 import logging
 
 import cogment
+from pettingzoo.mpe import simple_tag_v2
 
 from cogment_verse.specs import (
     encode_rendered_frame,
@@ -21,6 +22,7 @@ class Environment:
         self.env_class_name = cfg.env_class_name
         self.env_class = import_class(self.env_class_name)
         pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
+        pz_env
 
         # log.warning(pz_env.observation_spaces)
         log.warning(pz_env.observation_space("agent_0").shape)
@@ -61,7 +63,7 @@ class Environment:
 
         session_cfg = environment_session.config
 
-        pz_env = self.env_class.env()
+        pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
 
         pz_env.reset(seed=session_cfg.seed)
 
@@ -86,15 +88,18 @@ class Environment:
         log.warning(f"observation_space: {pz_env.observation_space(current_player_pz_agent)}")
 
         observation_value = observation_from_gym_observation(
+            # pz_env.observation_space(current_player_pz_agent), pz_observation[:4]
             pz_env.observation_space(current_player_pz_agent), pz_observation[:4]
         )
 
         rendered_frame = None
         if session_cfg.render:
-            if "rgb_array" not in pz_env.metadata["render_modes"]:
-                log.warning(f"Petting Zoo environment [{self.env_class_name}] doesn't support rendering to pixels")
-                return
-            rendered_frame = encode_rendered_frame(pz_env.render(mode="rgb_array"), session_cfg.render_width)
+            # if "rgb_array" not in pz_env.metadata["render_modes"]:
+            #     log.warning(f"Petting Zoo environment [{self.env_class_name}] doesn't support rendering to pixels")
+            #     return
+            # rendered_frame = encode_rendered_frame(pz_env.render(mode="rgb_array"), session_cfg.render_width)
+            print(f"pz_env.renderrrrrrrrr: {pz_env.render()}:")
+            rendered_frame = encode_rendered_frame(pz_env.render(mode='rgb_array'), session_cfg.render_width)
 
         environment_session.start(
             [
@@ -113,10 +118,20 @@ class Environment:
             if event.actions:
                 player_action_value = event.actions[current_player_actor_idx].action.value
                 action_value = player_action_value
+                if not current_player_pz_agent in pz_env.agents:
+                    action_value.properties.discrete = None
+
+
+                print(f"pz_env.agents: {pz_env.agents}")
+                print(f"current_agent: {current_player_pz_agent}")
+                # print(f"{player_action_value.properties}-----{type(player_action_value.properties)}")
 
                 gym_action = gym_action_from_action(
                     self.env_specs.action_space, action_value  # pylint: disable=no-member
                 )
+
+                # print(f"{gym_action}-----{type(gym_action)}")
+                # gym_action = None
 
                 pz_env.step(gym_action)
 
@@ -129,7 +144,7 @@ class Environment:
 
                 rendered_frame = None
                 if session_cfg.render:
-                    rendered_frame = encode_rendered_frame(pz_env.render(mode="rgb_array"), session_cfg.render_width)
+                    rendered_frame = encode_rendered_frame(pz_env.render(mode='rgb_array'), session_cfg.render_width)
 
                 observations = [
                     (
@@ -159,9 +174,10 @@ class Environment:
                         to=[rewarded_player_actor_name],
                     )
 
-                done = all(pz_env.dones[pz_agent] for pz_agent in pz_env.agents)
+                # done = all(pz_env.dones[pz_agent] for pz_agent in pz_env.agents)
 
-                if done:
+                # if done:
+                if not pz_env.agents:
                     # The trial ended
                     environment_session.end(observations)
                 elif event.type != cogment.EventType.ACTIVE:

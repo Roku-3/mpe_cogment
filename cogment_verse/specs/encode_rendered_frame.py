@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import cv2
+import datetime
+
 
 
 def encode_rendered_frame(rendered_frame, max_size=1024):
@@ -31,6 +33,16 @@ def encode_rendered_frame(rendered_frame, max_size=1024):
 
     # note rgb -> bgr for cv2
     result, encoded_frame = cv2.imencode(".jpg", rendered_frame[:, :, ::-1])
+    # cv2.imshow("Image", result)
+
+    # dt_now = datetime.datetime.now()
+    # cv2.imwrite(f"testoutput/output{dt_now.microsecond}.jpg", rendered_frame[:, :, ::-1])
+
     assert result
+    # print(os.getcwd())
+    # encoded_frame = cv2.imread("./render.png")
+    # print(rendered_frame)
+    # print(encoded_frame.tobytes())
 
     return encoded_frame.tobytes()
+    # return encoded_frame

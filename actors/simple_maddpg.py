@@ -174,7 +174,7 @@ class SimpleMADDPGTraining:
         "epoch_num_training_trials": 100,
         "hill_training_trials_ratio": 0,
         "epoch_num_validation_trials": 10,
-        "num_parallel_trials": 10,
+        "num_parallel_trials": 7,
         "learning_rate": 0.00025,
         "buffer_size": 10000,
         "discount_factor": 0.99,
@@ -309,7 +309,7 @@ class SimpleMADDPGTraining:
         replay_buffer = TorchReplayBuffer(
             capacity=self._cfg.buffer_size,
             # observation_shape=(flattened_dimensions(self._environment_specs.observation_space),),
-            observation_shape=(8,),
+            observation_shape=(4,),
             observation_dtype=self._dtype,
             action_shape=(1,),
             action_dtype=torch.int64,
@@ -384,7 +384,7 @@ class SimpleMADDPGTraining:
             ):
                 (_actor_name, observation, next_observation, action, reward, done, total_rewards) = sample
                 replay_buffer.add(
-                    observation=observation, next_observation=next_observation, action=action, reward=reward, done=done
+                    observation=observation[:4], next_observation=next_observation[:4], action=action, reward=reward, done=done
                 )
 
                 trial_done = done.item() == 1
