@@ -98,7 +98,7 @@ class Environment:
             #     log.warning(f"Petting Zoo environment [{self.env_class_name}] doesn't support rendering to pixels")
             #     return
             # rendered_frame = encode_rendered_frame(pz_env.render(mode="rgb_array"), session_cfg.render_width)
-            print(f"pz_env.renderrrrrrrrr: {pz_env.render()}:")
+            # print(f"pz_env.renderrrrrrrrr: {pz_env.render()}:")
             rendered_frame = encode_rendered_frame(pz_env.render(mode='rgb_array'), session_cfg.render_width)
 
         environment_session.start(

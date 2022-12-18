@@ -8,9 +8,6 @@ import { Button } from "../components/Button";
 import { FpsCounter } from "../components/FpsCounter";
 import { KeyboardControlList } from "../components/KeyboardControlList";
 
-const DEACTIVATED_BUTTONS_TEACHER = [];
-const DEACTIVATED_BUTTONS_PLAYER = [DPAD_BUTTONS.UP];
-
 export const SimpleTagEnvironments = ["environments.mpe_adapter.Environment/pettingzoo.mpe.simple_tag_v2"];
 
 export const SimpleTagControls = ({ sendAction, fps = 20, actorClass, ...props }) => {
@@ -27,24 +24,19 @@ export const SimpleTagControls = ({ sendAction, fps = 20, actorClass, ...props }
     (dt) => {
       if (pressedKeys.has("ArrowRight") || isButtonPressed(DPAD_BUTTONS.RIGHT)) {
         setActiveButtons([DPAD_BUTTONS.RIGHT]);
-        sendAction(new cogment_verse.PlayerAction({ value: { properties: [{ discrete: 1 }] } }));
+        sendAction(new cogment_verse.PlayerAction({ value: { properties: [{ discrete: 2 }] } }));
         return;
       } else if (pressedKeys.has("ArrowDown") || isButtonPressed(DPAD_BUTTONS.DOWN)) {
         setActiveButtons([DPAD_BUTTONS.DOWN]);
-        sendAction(new cogment_verse.PlayerAction({ value: { properties: [{ discrete: 2 }] } }));
+        sendAction(new cogment_verse.PlayerAction({ value: { properties: [{ discrete: 3 }] } }));
         return;
       } else if (pressedKeys.has("ArrowLeft") || isButtonPressed(DPAD_BUTTONS.LEFT)) {
         setActiveButtons([DPAD_BUTTONS.LEFT]);
-        sendAction(new cogment_verse.PlayerAction({ value: { properties: [{ discrete: 3 }] } }));
+        sendAction(new cogment_verse.PlayerAction({ value: { properties: [{ discrete: 1 }] } }));
         return;
-      } else if (isTeacher) {
-        if (pressedKeys.has("ArrowUp") || isButtonPressed(DPAD_BUTTONS.UP)) {
-          setActiveButtons([DPAD_BUTTONS.UP]);
-          sendAction(new cogment_verse.PlayerAction({ value: { properties: [{ discrete: 0 }] } }));
-          return;
-        }
-        setActiveButtons([]);
-        sendAction(TEACHER_NOOP_ACTION);
+      } else if (pressedKeys.has("ArrowUp") || isButtonPressed(DPAD_BUTTONS.UP)) {
+        setActiveButtons([DPAD_BUTTONS.UP]);
+        sendAction(new cogment_verse.PlayerAction({ value: { properties: [{ discrete: 4 }] } }));
         return;
       }
       setActiveButtons([]);
@@ -62,7 +54,7 @@ export const SimpleTagControls = ({ sendAction, fps = 20, actorClass, ...props }
           pressedButtons={pressedButtons}
           onPressedButtonsChange={setPressedButtons}
           activeButtons={activeButtons}
-          disabled={paused || (isTeacher ? DEACTIVATED_BUTTONS_TEACHER : DEACTIVATED_BUTTONS_PLAYER)}
+          disabled={paused}
         />
       </div>
       <div className="flex flex-row gap-1">
@@ -73,9 +65,7 @@ export const SimpleTagControls = ({ sendAction, fps = 20, actorClass, ...props }
       </div>
       <KeyboardControlList
         items={[
-          ["Left/Right Arrows", "Fire left/right engine"],
-          ["Down Arrow", "Fire the main engine"],
-          isTeacher ? ["Up Arrow", "turn off engine"] : null,
+          ["Up/Down/Left/Right Arrows", "Fire left/right engine"],
           ["p", "Pause/Unpause"],
         ]}
       />
