@@ -80,7 +80,7 @@ class Environment:
 
         rendered_frame = None
         if session_cfg.render:
-            rendered_frame = encode_rendered_frame(gym_env.render(), session_cfg.render_width)
+            rendered_frame = encode_rendered_frame(gym_env.render(mode="rgb_array"), session_cfg.render_width)
 
         environment_session.start([("*", Observation(value=observation_value, rendered_frame=rendered_frame))])
         async for event in environment_session.all_events():
@@ -107,7 +107,9 @@ class Environment:
 
                 rendered_frame = None
                 if session_cfg.render:
-                    rendered_frame = encode_rendered_frame(gym_env.render(), session_cfg.render_width)
+                    rendered_frame = encode_rendered_frame(gym_env.render(mode="rgb_array"), session_cfg.render_width)
+                
+                print("fooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
 
                 observations = [
                     (

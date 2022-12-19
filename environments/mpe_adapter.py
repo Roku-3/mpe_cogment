@@ -22,7 +22,6 @@ class Environment:
         self.env_class_name = cfg.env_class_name
         self.env_class = import_class(self.env_class_name)
         pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
-        pz_env
 
         # log.warning(pz_env.observation_spaces)
         log.warning(pz_env.observation_space("agent_0").shape)
@@ -82,7 +81,7 @@ class Environment:
 
         current_player_pz_agent, current_player_actor_idx, current_player_actor_name = next_player()
 
-        pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
+        pz_observation, _pz_reward, _pz_done, _pz_truncate, _pz_info = pz_env.last()
 
         log.warning(f"pz_observation: {pz_observation}")
         log.warning(f"observation_space: {pz_env.observation_space(current_player_pz_agent)}")
@@ -98,7 +97,7 @@ class Environment:
             #     log.warning(f"Petting Zoo environment [{self.env_class_name}] doesn't support rendering to pixels")
             #     return
             # rendered_frame = encode_rendered_frame(pz_env.render(mode="rgb_array"), session_cfg.render_width)
-            print(f"pz_env.renderrrrrrrrr: {pz_env.render()}:")
+            # print(f"pz_env.renderrrrrrrrr: {pz_env.render()}:")
             rendered_frame = encode_rendered_frame(pz_env.render(mode='rgb_array'), session_cfg.render_width)
 
         environment_session.start(
@@ -122,8 +121,8 @@ class Environment:
                     action_value.properties.discrete = None
 
 
-                print(f"pz_env.agents: {pz_env.agents}")
-                print(f"current_agent: {current_player_pz_agent}")
+                # print(f"pz_env.agents: {pz_env.agents}")
+                # print(f"current_agent: {current_player_pz_agent}")
                 # print(f"{player_action_value.properties}-----{type(player_action_value.properties)}")
 
                 gym_action = gym_action_from_action(
@@ -136,7 +135,7 @@ class Environment:
                 pz_env.step(gym_action)
 
                 current_player_pz_agent, current_player_actor_idx, current_player_actor_name = next_player()
-                pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
+                pz_observation, _pz_reward, _pz_done, _pz_truncate, _pz_info = pz_env.last()
 
                 observation_value = observation_from_gym_observation(
                     pz_env.observation_space(current_player_pz_agent), pz_observation
