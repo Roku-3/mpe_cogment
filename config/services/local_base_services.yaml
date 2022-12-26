@@ -8,6 +8,7 @@ trial_datastore:
   log_level: warning
 model_registry:
   port: ${generate_port:model_registry}
+  web_endpoint: http://sample
   log_level: warning
 web:
   port: 8080

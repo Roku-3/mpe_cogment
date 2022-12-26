@@ -23,10 +23,12 @@ def create_model_registry_service(work_dir, model_registry_cfg, services_directo
     os.makedirs(model_registry_data_dir, exist_ok=True)
 
     port = model_registry_cfg.port
+    web_endpoint = model_registry_cfg.web_endpoint
 
     services_directory.add(
         service_type=ServiceType.MODEL_REGISTRY,
         service_endpoint=f"grpc://localhost:{port}",
+        # service_endpoint=web_endpoint
     )
 
     return CogmentCliProcess(

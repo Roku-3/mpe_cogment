@@ -6,21 +6,34 @@ defaults:
   - override /services/environment: simple_tag
 run:
   class_name: actors.simple_maddpg.SimpleMADDPGTraining
-  seed: 618
-  num_epochs: 75
-  epoch_num_training_trials: 200
-  epoch_num_validation_trials: 20
-  num_parallel_trials: 7
-  learning_starts: ${run.batch_size}
-  learning_rate: 0.0005
-  discount_factor: 0.99
-  target_update_frequency: 4000
-  batch_size: 256
-  buffer_size: 10000
-  epsilon_schedule_start: 1
-  epsilon_schedule_end: 0.05
-  epsilon_schedule_duration_ratio: 0.75
-  train_frequency: 10
-  model_update_frequency: 10
+  # seed: 618
+  # num_epochs: 75
+  # epoch_num_training_trials: 200
+  # epoch_num_validation_trials: 20
+  # num_parallel_trials: 7
+  # learning_starts: ${run.batch_size}
+  # learning_rate: 0.0005
+  # discount_factor: 0.99
+  # target_update_frequency: 4000
+  # batch_size: 256
+  # buffer_size: 10000
+  # epsilon_schedule_start: 1
+  # epsilon_schedule_end: 0.05
+  # epsilon_schedule_duration_ratio: 0.75
+  # train_frequency: 10
+  # model_update_frequency: 10
   value_network:
     num_hidden_nodes: [128, 64]
+
+  seed: 10
+  num_parallel_trials: 7
+  episode_num: 30000   # total episode num during training procedure
+  episode_length: 25   # steps per episode
+  learn_interval: 100  # steps interval between learning time
+  random_steps: 50000    # random steps before the agent start to learn
+  tau: 0.02            # soft update parameter
+  gamma: 0.95          # discount factor
+  buffer_size: 100000     # capacity of replay buffer
+  batch_size: 1024     # batch-size of replay buffer
+  actor_lr: 0.01       # learning rate of actor
+  critic_lr: 0.01      # learning rate of critic

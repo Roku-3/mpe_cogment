@@ -23,10 +23,6 @@ class Environment:
         self.env_class = import_class(self.env_class_name)
         pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
 
-        # log.warning(pz_env.observation_spaces)
-        log.warning(pz_env.observation_space("agent_0").shape)
-
-        num_players = 0
         observation_space = None
         action_space = None
         for player in pz_env.possible_agents:
@@ -93,11 +89,6 @@ class Environment:
 
         rendered_frame = None
         if session_cfg.render:
-            # if "rgb_array" not in pz_env.metadata["render_modes"]:
-            #     log.warning(f"Petting Zoo environment [{self.env_class_name}] doesn't support rendering to pixels")
-            #     return
-            # rendered_frame = encode_rendered_frame(pz_env.render(mode="rgb_array"), session_cfg.render_width)
-            # print(f"pz_env.renderrrrrrrrr: {pz_env.render()}:")
             rendered_frame = encode_rendered_frame(pz_env.render(mode='rgb_array'), session_cfg.render_width)
 
         environment_session.start(
