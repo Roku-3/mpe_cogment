@@ -221,22 +221,22 @@ class SimpleMADDPGActor:
                 actor_session.do_action(None)
 
 class SimpleMADDPGTraining:
-    default_cfg = {
-        "seed": 10,
-        "num_epochs": 50,
-        "epoch_num_training_trials": 100,
-        "num_parallel_trials": 7,
-        "episode_num": 30000,   # total episode num during training procedure
-        "episode_length": 25,   # steps per episode
-        "learn_interval": 100,  # steps interval between learning time
-        "random_steps": 5e4,    # random steps before the agent start to learn
-        "tau": 0.02,            # soft update parameter
-        "gamma": 0.95,          # discount factor
-        "buffer_size": 1e6,     # capacity of replay buffer
-        "batch_size": 1024,     # batch-size of replay buffer
-        "actor_lr": 0.01,       # learning rate of actor
-        "critic_lr": 0.01,      # learning rate of critic
-    }
+    # default_cfg = {
+    #     "seed": 10,
+    #     "num_epochs": 50,
+    #     "epoch_num_training_trials": 100,
+    #     "num_parallel_trials": 7,
+    #     "episode_num": 30000,   # total episode num during training procedure
+    #     "episode_length": 25,   # steps per episode
+    #     "learn_interval": 100,  # steps interval between learning time
+    #     "random_steps": 5e4,    # random steps before the agent start to learn
+    #     "tau": 0.02,            # soft update parameter
+    #     "gamma": 0.95,          # discount factor
+    #     "buffer_size": 1e6,     # capacity of replay buffer
+    #     "batch_size": 1024,     # batch-size of replay buffer
+    #     "actor_lr": 0.01,       # learning rate of actor
+    #     "critic_lr": 0.01,      # learning rate of critic
+    # }
 
     def __init__(self, environment_specs, cfg):
         super().__init__()
@@ -363,4 +363,5 @@ class SimpleMADDPGTraining:
                 sample_producer_impl=self.sample_producer_impl,
                 num_parallel_trials=self._cfg.num_parallel_trials,
             ):
-                (_actor_name, observation, next_observation, action, reward, done, total_rewards) = sample
+                # (_actor_name, observation, next_observation, action, reward, done, total_rewards) = sample
+                done = sample

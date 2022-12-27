@@ -1,3 +1,0 @@
-td3:
-  class_name: actors.td3.TD3Actor
-  port: ${generate_port:actors.td3.TD3Actor}

@@ -86,8 +86,8 @@ class Environment:
         pz_observation, _pz_reward, _pz_done, _pz_truncate, _pz_info = pz_env.last()
         # pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
 
-        log.warning(f"pz_observation: {pz_observation}")
-        log.warning(f"observation_space: {pz_env.observation_space(current_player_pz_agent)}")
+        # log.warning(f"pz_observation: {pz_observation}")
+        # log.warning(f"observation_space: {pz_env.observation_space(current_player_pz_agent)}")
 
         observation_value = observation_from_gym_observation(
             pz_env.observation_space(current_player_pz_agent), pz_observation
@@ -122,16 +122,15 @@ class Environment:
                 # print(f"current_agent: {current_player_pz_agent}")
                 # print(f"{player_action_value.properties}-----{type(player_action_value.properties)}")
 
+                # 人間の入力で行動決定
                 gym_action = gym_action_from_action(
                     self.env_specs.action_space, action_value  # pylint: disable=no-member
                 )
 
-                # logging.warning(gym_action)
-                # logging.warning(type(gym_action))
-                gym_action = random.randint(0,4)
-
-                logging.warning(pz_env.agent_selection)
-                logging.warning(pz_env.last())
+                # 人間じゃなかったら動かさない
+                if not pz_env.agent_selection == "adversary_0":
+                    # gym_action = random.randint(0,4)
+                    gym_action = 0
 
                 if pz_env.agents:
                     pz_env.step(gym_action)

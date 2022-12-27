@@ -1,6 +1,0 @@
-# @package _global_
-defaults:
-  - override /services/actor:
-      - simple_a2c
-  - override /run: simple_a2c
-  - override /services/environment: cartpole

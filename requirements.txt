@@ -10,8 +10,8 @@ uvicorn==0.17.6
 
 # environments
 gym[atari,box2d,classic_control, mujoco]>=0.25,<0.26
-PettingZoo[classic,mpe]>=1.18,<1.19
-# PettingZoo[classic,mpe]==1.20.1
+# PettingZoo[classic,mpe]>=1.18,<1.19
+PettingZoo[classic,mpe]==1.21.0
 
 # actors
 torch==1.11.0

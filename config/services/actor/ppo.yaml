@@ -1,3 +1,0 @@
-ppo:
-  class_name: actors.ppo.PPOActor
-  port: ${generate_port:actors.ppo.PPOActor}

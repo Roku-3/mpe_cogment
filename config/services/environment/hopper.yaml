@@ -1,3 +1,0 @@
-class_name: environments.gym_wrapper.Environment
-env_name: Hopper-v4
-port: ${generate_port:environments.gym_wrapper.Environment}
