@@ -14,17 +14,22 @@ from cogment_verse.specs import (
 )
 from cogment_verse.constants import PLAYER_ACTOR_CLASS, TEACHER_ACTOR_CLASS
 from cogment_verse.utils import import_class
+import random
 
 log = logging.getLogger(__name__)
+
 
 class Environment:
     def __init__(self, cfg):
         self.env_class_name = cfg.env_class_name
         self.env_class = import_class(self.env_class_name)
-        pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
+        # pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
+        pz_env = self.env_class.env()
 
         observation_space = None
         action_space = None
+        num_players = 0
+
         for player in pz_env.possible_agents:
             num_players += 1
             if observation_space is None:
@@ -54,11 +59,12 @@ class Environment:
             for (actor_idx, actor) in enumerate(actors)
             if actor.actor_class_name == PLAYER_ACTOR_CLASS
         ]
-        assert len(player_actors) == self.env_specs.num_players  # pylint: disable=no-member
+        # assert len(player_actors) == self.env_specs.num_players  # pylint: disable=no-member
 
         session_cfg = environment_session.config
 
-        pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
+        # pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
+        pz_env = self.env_class.env()
 
         pz_env.reset(seed=session_cfg.seed)
 
@@ -78,13 +84,13 @@ class Environment:
         current_player_pz_agent, current_player_actor_idx, current_player_actor_name = next_player()
 
         pz_observation, _pz_reward, _pz_done, _pz_truncate, _pz_info = pz_env.last()
+        # pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
 
         log.warning(f"pz_observation: {pz_observation}")
         log.warning(f"observation_space: {pz_env.observation_space(current_player_pz_agent)}")
 
         observation_value = observation_from_gym_observation(
-            # pz_env.observation_space(current_player_pz_agent), pz_observation[:4]
-            pz_env.observation_space(current_player_pz_agent), pz_observation[:4]
+            pz_env.observation_space(current_player_pz_agent), pz_observation
         )
 
         rendered_frame = None
@@ -120,13 +126,19 @@ class Environment:
                     self.env_specs.action_space, action_value  # pylint: disable=no-member
                 )
 
-                # print(f"{gym_action}-----{type(gym_action)}")
-                # gym_action = None
+                # logging.warning(gym_action)
+                # logging.warning(type(gym_action))
+                gym_action = random.randint(0,4)
 
-                pz_env.step(gym_action)
+                logging.warning(pz_env.agent_selection)
+                logging.warning(pz_env.last())
+
+                if pz_env.agents:
+                    pz_env.step(gym_action)
 
                 current_player_pz_agent, current_player_actor_idx, current_player_actor_name = next_player()
                 pz_observation, _pz_reward, _pz_done, _pz_truncate, _pz_info = pz_env.last()
+                # pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
 
                 observation_value = observation_from_gym_observation(
                     pz_env.observation_space(current_player_pz_agent), pz_observation
@@ -167,7 +179,8 @@ class Environment:
                 # done = all(pz_env.dones[pz_agent] for pz_agent in pz_env.agents)
 
                 # if done:
-                if not pz_env.agents:
+                # if not pz_env.agents:
+                if _pz_done or _pz_truncate:
                     # The trial ended
                     environment_session.end(observations)
                 elif event.type != cogment.EventType.ACTIVE:

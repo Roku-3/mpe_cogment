@@ -4,6 +4,7 @@ defaults:
   - services/actor: random
   - run: play
   - _self_
+  - experiment: simple_maddpg/simple_tag
 
 hydra:
   job:
