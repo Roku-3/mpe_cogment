@@ -10,7 +10,7 @@ import { KeyboardControlList } from "../components/KeyboardControlList";
 
 export const SimpleTagEnvironments = ["environments.mpe_adapter.Environment/pettingzoo.mpe.simple_tag_v2"];
 
-export const SimpleTagControls = ({ sendAction, fps = 20, actorClass, ...props }) => {
+export const SimpleTagControls = ({ sendAction, fps = 30, actorClass, ...props }) => {
   const isTeacher = actorClass === TEACHER_ACTOR_CLASS;
   const [paused, setPaused] = useState(false);
   const togglePause = useCallback(() => setPaused((paused) => !paused), [setPaused]);

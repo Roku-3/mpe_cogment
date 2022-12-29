@@ -24,6 +24,7 @@ export const useRealTimeUpdate = (sendAction, fps = 30, paused = true) => {
     }
 
     const targetDeltaTime = 1000.0 / fps;
+    // const targetDeltaTime = 500.0 / fps;
 
     const remainingDeltaTime =
       lastUpdateTimestamp != null ? Math.max(0, targetDeltaTime - new Date().getTime() + lastUpdateTimestamp) : 0;
@@ -35,6 +36,7 @@ export const useRealTimeUpdate = (sendAction, fps = 30, paused = true) => {
       sendAction(actualDeltaTime);
       setLastUpdateTimestamp(currentTimestamp);
       setCurrentFps(1000 / actualDeltaTime);
+      // setCurrentFps(500 / actualDeltaTime);
     }, remainingDeltaTime);
     return () => {
       clearTimeout(timer);

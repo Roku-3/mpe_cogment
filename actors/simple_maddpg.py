@@ -243,6 +243,7 @@ class SimpleMADDPGActor:
                 action_value = SpaceValue(
                     properties=[SpaceValue.PropertyValue(discrete=next_action)]
                 )
+
                 actor_session.do_action(PlayerAction(value=action_value))
 
                 self.rewards[current_player]=reward
