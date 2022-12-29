@@ -7,6 +7,7 @@ import numpy as np
 
 import cogment
 import torch
+import os
 
 from cogment_verse.specs import (
     AgentConfig,
@@ -28,6 +29,7 @@ from .Buffer import Buffer
 from cogment_verse import Model # pylint: disable=abstract-class-instantiated
 from pettingzoo.mpe import simple_tag_v2
 import torch.nn.functional as F
+import random
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
@@ -54,7 +56,6 @@ class SimpleMADDPGModel(Model):
     def __init__(self, model_id, dim_info, capacity, batch_size, actor_lr, critic_lr, version_number=0):
         super().__init__(model_id=model_id, version_number=version_number)
 
-        logging.warning(dim_info)
         # sum all the dims of each agent to get input dim for critic
         global_obs_act_dim = sum(sum(val) for val in dim_info.values())
         # create Agent(actor-critic) and replay buffer for each agent
@@ -168,6 +169,14 @@ class SimpleMADDPGModel(Model):
         )
         return {"num_samples_seen": 1245}
 
+    @classmethod
+    def load_pt(cls, dim_info, file):
+        """init maddpg using the model saved in `file`"""
+        instance = cls(0, dim_info, 0, 0, 0, 0)
+        data = torch.load(file)
+        for agent_id, agent in instance.agents.items():
+            agent.actor.load_state_dict(data[agent_id])
+        return instance
 
     @classmethod
     def load(cls, model_id, version_number, model_user_data, version_user_data, model_data_f):
@@ -217,6 +226,10 @@ class SimpleMADDPGActor:
         model, _, _ = await actor_session.model_registry.retrieve_version(
             SimpleMADDPGModel, config.model_id, config.model_version
         )
+        _, dim_info, _ = get_env()
+        model = SimpleMADDPGModel.load_pt(dim_info, './model_data/model.pt')
+
+        step = 0
 
         # 各プレイヤーのactionを反映
         async for event in actor_session.all_events():
@@ -238,12 +251,16 @@ class SimpleMADDPGActor:
 
                 # 一周したら
                 if current_player == "agent_0":
+                    step += 1
                     self.next_actions = model.select_action(self.observations)
-                    model.add(self.observations, self.actions, self.rewards, self.next_observations, self.dones)
+                    # model.add(self.observations, self.actions, self.rewards, self.next_observations, self.dones)
+
+                    ##### 人間のトライアルじゃバッファがたまらないので
                     # model.learn(self._cfg.batch_size, self._cfg.gamma)
                     # model.update_target(self._cfg.tau)
                     # model.learn(1024, 0.95)
                     # model.update_target(0.02)
+                    #######
                     self.observations=self.next_observations
 
 

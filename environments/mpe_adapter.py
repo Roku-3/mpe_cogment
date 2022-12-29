@@ -89,23 +89,24 @@ class Environment:
         async for event in environment_session.all_events():
             if event.actions:
                 # actions[0]が人間
-                action_value = event.actions[0].action.value
 
                 # print(f"pz_env.agents: {pz_env.agents}")
                 # print(f"current_agent: {current_player_pz_agent}")
                 # print(f"{player_action_value.properties}-----{type(player_action_value.properties)}")
+                # log.warning(event.actions)
+                # log.warning(f"actions[0]:[0]: {event.actions[0].action.value.properties[0]}")
                 # log.warning(f"actions[1]:[0]: {event.actions[1].action.value.properties[0]}")
-                # log.warning(f"actions[1]:[1]: {event.actions[1].action.value.properties[1]}")
 
-                # 人間の入力で行動決定
+
+                if pz_env.agent_selection == "adversary_0":
+                    # gym_action = random.randint(0,4)
+                    action_value = event.actions[0].action.value
+                else:
+                    action_value = event.actions[1].action.value
+
                 gym_action = gym_action_from_action(
                     self.env_specs.action_space, action_value  # pylint: disable=no-member
                 )
-
-                # 人間じゃなかったら動かさない
-                if not pz_env.agent_selection == "adversary_0":
-                    # gym_action = random.randint(0,4)
-                    gym_action = 0
 
                 if pz_env.agents:
                     pz_env.step(gym_action)
