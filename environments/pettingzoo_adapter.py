@@ -179,6 +179,7 @@ class Environment:
                 if session_cfg.render:
                     rendered_frame = encode_rendered_frame(pz_env.render(mode="rgb_array"), session_cfg.render_width)
 
+                # event.observation.observation.valueで取得できる
                 observations = [
                     (
                         "*",

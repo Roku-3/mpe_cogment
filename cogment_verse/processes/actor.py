@@ -87,7 +87,8 @@ def create_actor_service(work_dir, specs_filename, model_registry, actor_cfg, se
     services_directory.add(
         service_type=ServiceType.ACTOR,
         service_name=get_implementation_name(actor),
-        service_endpoint=f"grpc://localhost:{actor_cfg.port}",
+        # service_endpoint=f"grpc://localhost:{actor_cfg.port}",
+        service_endpoint=f"grpc://100.70.158.113:{actor_cfg.port}",
     )
 
     return process

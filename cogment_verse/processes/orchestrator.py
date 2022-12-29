@@ -22,7 +22,8 @@ def create_orchestrator_service(work_dir, orchestrator_cfg, services_directory):
     web_endpoint = orchestrator_cfg.web_endpoint
     services_directory.add(
         service_type=ServiceType.ORCHESTRATOR,
-        service_endpoint=f"grpc://localhost:{port}",
+        # service_endpoint=f"grpc://localhost:{port}",
+        service_endpoint=f"grpc://100.70.158.113:{port}",
     )
     services_directory.add(
         service_type=ServiceType.ORCHESTRATOR_WEB_ENDPOINT,

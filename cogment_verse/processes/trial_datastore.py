@@ -23,7 +23,8 @@ def create_trial_datastore_service(work_dir, trial_datastore_cfg, services_direc
 
     services_directory.add(
         service_type=ServiceType.TRIAL_DATASTORE,
-        service_endpoint=f"grpc://localhost:{port}",
+        # service_endpoint=f"grpc://localhost:{port}",
+        service_endpoint=f"grpc://100.70.158.113:{port}",
     )
 
     return CogmentCliProcess(

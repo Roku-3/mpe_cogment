@@ -17,6 +17,7 @@ from cogment_verse.specs import (
     PLAYER_ACTOR_CLASS,
     PlayerAction,
     SpaceValue,
+    deserialize_ndarray,
     sample_space,
     WEB_ACTOR_NAME,
     HUMAN_ACTOR_IMPL,
@@ -37,14 +38,14 @@ def get_env():
     new_env = None
     new_env = simple_tag_v2.parallel_env()
 
-    new_env.reset()
+    obs = new_env.reset()
     _dim_info = {}
     for agent_id in new_env.agents:
         _dim_info[agent_id] = []  # [obs_dim, act_dim]
         _dim_info[agent_id].append(new_env.observation_space(agent_id).shape[0])
         _dim_info[agent_id].append(new_env.action_space(agent_id).n)
 
-    return new_env, _dim_info
+    return new_env, _dim_info, obs
 
 
 class SimpleMADDPGModel(Model):
@@ -113,7 +114,6 @@ class SimpleMADDPGModel(Model):
             a = self.agents[agent].action(o)  # torch.Size([1, action_size])
             # NOTE that the output is a tensor, convert it to int before input to the environment
             actions[agent] = a.squeeze(0).argmax().item()
-            self.logger.info(f'{agent} action: {actions[agent]}')
         return actions
 
     def learn(self, batch_size, gamma):
@@ -139,7 +139,6 @@ class SimpleMADDPGModel(Model):
             actor_loss = -agent.critic_value(list(obs.values()), list(act.values())).mean()
             actor_loss_pse = torch.pow(logits, 2).mean()
             agent.update_actor(actor_loss + 1e-3 * actor_loss_pse)
-            # self.logger.info(f'agent{i}: critic loss: {critic_loss.item()}, actor loss: {actor_loss.item()}')
 
     def update_target(self, tau):
         def soft_update(from_network, to_network):
@@ -194,50 +193,61 @@ class SimpleMADDPGActor:
     # tensorを何の型で扱うか初期化
     def __init__(self, _cfg):
         self._dtype = torch.float
+        self._cfg = _cfg
+        _, _, self.observations = get_env()
+        # self.rewards={}
+        # self.actions={}
+        # self.next_actions={}
+        # self.next_observations={}
+        # self.dones={}
+        self.rewards={'adversary_0': 0,'adversary_1': 0,'adversary_2': 0,'agent_0': 0}
+        self.actions={'adversary_0': 0,'adversary_1': 0,'adversary_2': 0,'agent_0': 0}
+        self.next_actions={'adversary_0': 0,'adversary_1': 0,'adversary_2': 0,'agent_0': 0}
+        self.next_observations=self.observations
+        self.dones={'adversary_0': False,'adversary_1': False,'adversary_2': False,'agent_0': False}
 
     def get_actor_classes(self):
         return [PLAYER_ACTOR_CLASS]
 
     async def impl(self, actor_session):
         actor_session.start()
-
         config = actor_session.config
-        observation_space = config.environment_specs.observation_space
-        action_space = config.environment_specs.action_space
-
-        rng = np.random.default_rng(config.seed if config.seed is not None else 0)
 
         # 保存されているモデルの取り出し
         model, _, _ = await actor_session.model_registry.retrieve_version(
             SimpleMADDPGModel, config.model_id, config.model_version
         )
 
-        action_value = None
-
         # 各プレイヤーのactionを反映
         async for event in actor_session.all_events():
             if event.observation and event.type == cogment.EventType.ACTIVE:
-                # actor_session.do_action(PlayerAction(value=action_value))
-                actor_session.do_action(None)
+                current_player = event.observation.observation.current_player
+                next_action = self.next_actions[current_player]
+                reward=event.observation.observation.reward
+                next_obs=deserialize_ndarray(event.observation.observation.observation)
+                done=event.observation.observation.done
+
+                action_value = SpaceValue(
+                    properties=[SpaceValue.PropertyValue(discrete=next_action)]
+                )
+                actor_session.do_action(PlayerAction(value=action_value))
+
+                self.rewards[current_player]=reward
+                self.next_observations[current_player]=next_obs
+                self.dones[current_player]=done
+
+                # 一周したら
+                if current_player == "agent_0":
+                    self.next_actions = model.select_action(self.observations)
+                    model.add(self.observations, self.actions, self.rewards, self.next_observations, self.dones)
+                    # model.learn(self._cfg.batch_size, self._cfg.gamma)
+                    # model.update_target(self._cfg.tau)
+                    # model.learn(1024, 0.95)
+                    # model.update_target(0.02)
+                    self.observations=self.next_observations
+
 
 class SimpleMADDPGTraining:
-    # default_cfg = {
-    #     "seed": 10,
-    #     "num_epochs": 50,
-    #     "epoch_num_training_trials": 100,
-    #     "num_parallel_trials": 7,
-    #     "episode_num": 30000,   # total episode num during training procedure
-    #     "episode_length": 25,   # steps per episode
-    #     "learn_interval": 100,  # steps interval between learning time
-    #     "random_steps": 5e4,    # random steps before the agent start to learn
-    #     "tau": 0.02,            # soft update parameter
-    #     "gamma": 0.95,          # discount factor
-    #     "buffer_size": 1e6,     # capacity of replay buffer
-    #     "batch_size": 1024,     # batch-size of replay buffer
-    #     "actor_lr": 0.01,       # learning rate of actor
-    #     "critic_lr": 0.01,      # learning rate of critic
-    # }
-
     def __init__(self, environment_specs, cfg):
         super().__init__()
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -278,18 +288,7 @@ class SimpleMADDPGTraining:
         # Initializing a model
         model_id = f"{run_session.run_id}_model"
 
-        # assert len(self._environment_specs.action_space.properties) == 1
-        # assert self._environment_specs.action_space.properties[0].WhichOneof("type") == "discrete"
-
-        # model = SimpleMADDPGModel(
-        #     model_id,
-        #     environment_implementation=self._environment_specs.implementation,
-        #     num_input=flattened_dimensions(self._environment_specs.observation_space),
-        #     num_output=flattened_dimensions(self._environment_specs.action_space),
-        #     num_hidden_nodes=self._cfg.value_network.num_hidden_nodes,
-        #     dtype=self._dtype,
-        # )
-        _env, dim_info = get_env()
+        _env, dim_info, _obs = get_env()
 
         model = SimpleMADDPGModel(
             model_id,

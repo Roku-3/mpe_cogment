@@ -98,7 +98,8 @@ def create_environment_service(work_dir, specs_filename, environment_cfg, servic
     services_directory.add(
         service_type=ServiceType.ENVIRONMENT,
         service_name=get_implementation_name(env),
-        service_endpoint=f"grpc://localhost:{environment_cfg.port}",
+        # service_endpoint=f"grpc://localhost:{environment_cfg.port}",
+        service_endpoint=f"grpc://100.70.158.113:{environment_cfg.port}",
     )
 
     return process

@@ -1,11 +1,12 @@
 from enum import Enum
 import logging
-
 import cogment
 from pettingzoo.mpe import simple_tag_v2
 
 from cogment_verse.specs import (
     encode_rendered_frame,
+    serialize_ndarray,
+    deserialize_ndarray,
     EnvironmentSpecs,
     Observation,
     space_from_gym_space,
@@ -15,9 +16,7 @@ from cogment_verse.specs import (
 from cogment_verse.constants import PLAYER_ACTOR_CLASS, TEACHER_ACTOR_CLASS
 from cogment_verse.utils import import_class
 import random
-
 log = logging.getLogger(__name__)
-
 
 class Environment:
     def __init__(self, cfg):
@@ -54,57 +53,34 @@ class Environment:
 
     async def impl(self, environment_session):
         actors = environment_session.get_active_actors()
-        player_actors = [
-            (actor_idx, actor.actor_name)
-            for (actor_idx, actor) in enumerate(actors)
-            if actor.actor_class_name == PLAYER_ACTOR_CLASS
-        ]
+
         # assert len(player_actors) == self.env_specs.num_players  # pylint: disable=no-member
 
         session_cfg = environment_session.config
-
-        # pz_env = self.env_class.env(num_good=2, num_adversaries=0, num_obstacles=0, continuous_actions=False)
         pz_env = self.env_class.env()
-
         pz_env.reset(seed=session_cfg.seed)
-
-        pz_agent_iterator = iter(pz_env.agent_iter())
-
-        def next_player():
-            nonlocal pz_agent_iterator
-            current_player_pz_agent = next(pz_agent_iterator)
-            current_player_actor_idx, current_player_actor_name = next(
-                (player_actor_idx, player_actor_name)
-                for (player_pz_agent, (player_actor_idx, player_actor_name)) in zip(pz_env.agents, player_actors)
-                # if player_pz_agent == current_player_pz_agent
-                if True
-            )
-            return (current_player_pz_agent, current_player_actor_idx, current_player_actor_name)
-
-        current_player_pz_agent, current_player_actor_idx, current_player_actor_name = next_player()
-
         pz_observation, _pz_reward, _pz_done, _pz_truncate, _pz_info = pz_env.last()
         # pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
 
         # log.warning(f"pz_observation: {pz_observation}")
         # log.warning(f"observation_space: {pz_env.observation_space(current_player_pz_agent)}")
 
-        observation_value = observation_from_gym_observation(
-            pz_env.observation_space(current_player_pz_agent), pz_observation
-        )
-
         rendered_frame = None
         if session_cfg.render:
             rendered_frame = encode_rendered_frame(pz_env.render(mode='rgb_array'), session_cfg.render_width)
+
 
         environment_session.start(
             [
                 (
                     "*",
                     Observation(
-                        value=observation_value,  # TODO Should only be sent to the current player
-                        rendered_frame=rendered_frame,  # TODO Should only be sent to observers
-                        current_player=current_player_actor_name,
+                        current_player = pz_env.agent_selection,
+                        # observation=pz_observation,
+                        observation=serialize_ndarray(pz_observation),
+                        reward=_pz_reward,
+                        done=_pz_done,
+                        rendered_frame=rendered_frame,
                     ),
                 )
             ]
@@ -112,15 +88,14 @@ class Environment:
 
         async for event in environment_session.all_events():
             if event.actions:
-                player_action_value = event.actions[current_player_actor_idx].action.value
-                action_value = player_action_value
-                if not current_player_pz_agent in pz_env.agents:
-                    action_value.properties.discrete = None
-
+                # actions[0]が人間
+                action_value = event.actions[0].action.value
 
                 # print(f"pz_env.agents: {pz_env.agents}")
                 # print(f"current_agent: {current_player_pz_agent}")
                 # print(f"{player_action_value.properties}-----{type(player_action_value.properties)}")
+                # log.warning(f"actions[1]:[0]: {event.actions[1].action.value.properties[0]}")
+                # log.warning(f"actions[1]:[1]: {event.actions[1].action.value.properties[1]}")
 
                 # 人間の入力で行動決定
                 gym_action = gym_action_from_action(
@@ -135,13 +110,13 @@ class Environment:
                 if pz_env.agents:
                     pz_env.step(gym_action)
 
-                current_player_pz_agent, current_player_actor_idx, current_player_actor_name = next_player()
                 pz_observation, _pz_reward, _pz_done, _pz_truncate, _pz_info = pz_env.last()
-                # pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
 
-                observation_value = observation_from_gym_observation(
-                    pz_env.observation_space(current_player_pz_agent), pz_observation
-                )
+                # log.warning(f"pz_observation: {pz_observation}")
+                # log.warning(f"_pz_reward: {_pz_reward}")
+                # log.warning(f"_pz_done: {_pz_done}")
+                # log.warning(f"_pz_truncate: {_pz_truncate}")
+                # log.warning(f"_pz_info: {_pz_info}")
 
                 rendered_frame = None
                 if session_cfg.render:
@@ -151,34 +126,16 @@ class Environment:
                     (
                         "*",
                         Observation(
-                            value=observation_value,
+                            current_player = pz_env.agent_selection,
+                            # observation=pz_observation,
+                            observation=serialize_ndarray(pz_observation),
+                            reward=_pz_reward,
+                            done=_pz_done,
                             rendered_frame=rendered_frame,
-                            current_player=current_player_actor_name,
                         ),
                     )
                 ]
 
-                for (rewarded_player_pz_agent, pz_reward) in pz_env.rewards.items():
-                    if pz_reward == 0:
-                        continue
-                    rewarded_player_actor_name = next(
-                        player_actor_name
-                        for (player_pz_agent, (player_actor_idx, player_actor_name)) in zip(
-                            pz_env.agents, player_actors
-                        )
-                        # if player_pz_agent == rewarded_player_pz_agent
-                        if True
-                    )
-                    environment_session.add_reward(
-                        value=pz_reward,
-                        confidence=1.0,
-                        to=[rewarded_player_actor_name],
-                    )
-
-                # done = all(pz_env.dones[pz_agent] for pz_agent in pz_env.agents)
-
-                # if done:
-                # if not pz_env.agents:
                 if _pz_done or _pz_truncate:
                     # The trial ended
                     environment_session.end(observations)

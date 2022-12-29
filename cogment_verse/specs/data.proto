@@ -118,7 +118,12 @@ message Observation {
   optional SpaceMask action_mask = 3;
   optional bytes rendered_frame = 4;
   repeated string overridden_players = 5;  // list of players that provided an action that was overriden during the last tick
-  //NDArray segmentation = 6;
+  // NDArray segmentation = 6;
+  NDArray observation = 6;
+  float reward = 7;
+  bool done = 8;
+  
+  
 }
 
 message PlayerAction {
