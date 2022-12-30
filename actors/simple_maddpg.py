@@ -53,7 +53,7 @@ def get_env():
 class SimpleMADDPGModel(Model):
     """A MADDPG(Multi Agent Deep Deterministic Policy Gradient) agent"""
 
-    def __init__(self, model_id, dim_info, capacity, batch_size, actor_lr, critic_lr, version_number=0):
+    def __init__(self, model_id, dim_info, buffer_capacity, batch_size, actor_lr, critic_lr, version_number=0):
         super().__init__(model_id=model_id, version_number=version_number)
 
         # sum all the dims of each agent to get input dim for critic
@@ -63,12 +63,12 @@ class SimpleMADDPGModel(Model):
         self.buffers = {}
         for agent_id, (obs_dim, act_dim) in dim_info.items():
             self.agents[agent_id] = Agent(obs_dim, act_dim, global_obs_act_dim, actor_lr, critic_lr)
-            self.buffers[agent_id] = Buffer(capacity, obs_dim, act_dim, 'cpu')
+            self.buffers[agent_id] = Buffer(buffer_capacity, obs_dim, act_dim, 'cpu')
         self.dim_info = dim_info
         self.batch_size = batch_size
 
         # 関数では使わないけど保存？
-        self.capacity = capacity
+        self.buffer_capacity = buffer_capacity
         self.actor_lr = actor_lr
         self.critic_lr = critic_lr
 
@@ -154,7 +154,7 @@ class SimpleMADDPGModel(Model):
     def get_model_user_data(self):
         return {
             "dim_info": json.dumps(self.dim_info),
-            "capacity": self.capacity,
+            "buffer_capacity": self.buffer_capacity,
             "batch_size": self.batch_size,
             "actor_lr": self.actor_lr,
             "critic_lr": self.critic_lr,
@@ -170,13 +170,29 @@ class SimpleMADDPGModel(Model):
         return {"num_samples_seen": 1245}
 
     @classmethod
-    def load_pt(cls, dim_info, file):
+    def load_pt(cls, model_data_f, buffer_capacity, batch_size, actor_lr, critic_lr):
         """init maddpg using the model saved in `file`"""
-        instance = cls(0, dim_info, 0, 0, 0, 0)
-        data = torch.load(file)
-        for agent_id, agent in instance.agents.items():
+        _env, dim_info, _obs = get_env()
+        model = SimpleMADDPGModel(
+            model_id=133, 
+            dim_info=dim_info, 
+            buffer_capacity=buffer_capacity,
+            batch_size=batch_size,
+            actor_lr=actor_lr,
+            critic_lr=critic_lr,
+        )
+        data = torch.load(model_data_f)
+
+
+        for agent_id, agent in model.agents.items():
             agent.actor.load_state_dict(data[agent_id])
-        return instance
+
+            # 読み込んだparamを表示
+            # log.warning("ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd")
+            # if agent_id == "adversary_2":
+            #     for param in agent.actor.parameters():
+            #         log.warning(param)
+        return model
 
     @classmethod
     def load(cls, model_id, version_number, model_user_data, version_user_data, model_data_f):
@@ -185,7 +201,7 @@ class SimpleMADDPGModel(Model):
         model = SimpleMADDPGModel(
             model_id=model_id, 
             dim_info=json.loads(model_user_data["dim_info"]), 
-            capacity=int(model_user_data["capacity"]), 
+            buffer_capacity=int(model_user_data["buffer_capacity"]), 
             batch_size=int(model_user_data["batch_size"]), 
             actor_lr=float(model_user_data["actor_lr"]), 
             critic_lr=float(model_user_data["critic_lr"]), 
@@ -200,15 +216,10 @@ class SimpleMADDPGModel(Model):
 # 人間を含まないMADDPGモデルを保存するためのもの
 class SimpleMADDPGActor:
     # tensorを何の型で扱うか初期化
-    def __init__(self, _cfg):
+    def __init__(self, cfg):
         self._dtype = torch.float
-        self._cfg = _cfg
+        self._cfg = cfg
         _, _, self.observations = get_env()
-        # self.rewards={}
-        # self.actions={}
-        # self.next_actions={}
-        # self.next_observations={}
-        # self.dones={}
         self.rewards={'adversary_0': 0,'adversary_1': 0,'adversary_2': 0,'agent_0': 0}
         self.actions={'adversary_0': 0,'adversary_1': 0,'adversary_2': 0,'agent_0': 0}
         self.next_actions={'adversary_0': 0,'adversary_1': 0,'adversary_2': 0,'agent_0': 0}
@@ -226,8 +237,8 @@ class SimpleMADDPGActor:
         model, _, _ = await actor_session.model_registry.retrieve_version(
             SimpleMADDPGModel, config.model_id, config.model_version
         )
-        _, dim_info, _ = get_env()
-        model = SimpleMADDPGModel.load_pt(dim_info, './model_data/model.pt')
+        # model = SimpleMADDPGModel.load_pt('./model_data/model.pt', self._cfg.buffer_capacity, self._cfg.batch_size, self._cfg.actor_lr, self._cfg.cirtic_lr)
+        model = SimpleMADDPGModel.load_pt('./model_data/model.pt', 100000, 1024, 0.01, 0.01)
 
         step = 0
 
@@ -254,7 +265,7 @@ class SimpleMADDPGActor:
                 if current_player == "agent_0":
                     step += 1
                     self.next_actions = model.select_action(self.observations)
-                    # model.add(self.observations, self.actions, self.rewards, self.next_observations, self.dones)
+                    model.add(self.observations, self.actions, self.rewards, self.next_observations, self.dones)
 
                     ##### 人間のトライアルじゃバッファがたまらないので
                     # model.learn(self._cfg.batch_size, self._cfg.gamma)
@@ -276,7 +287,6 @@ class SimpleMADDPGTraining:
 
     async def sample_producer_impl(self, sample_producer_session):
         async for sample in sample_producer_session.all_trial_samples():
-            pass
             # actor_sample = sample.actors_data[player_actor_name]
             # if actor_sample.observation is None:
                 # This can happen when there is several "end-of-trial" samples
@@ -302,6 +312,7 @@ class SimpleMADDPGTraining:
                 )
             )
 
+    # modelの初期状態をレジストリに送るためのImpletation
     async def impl(self, run_session):
         # Initializing a model
         model_id = f"{run_session.run_id}_model"
@@ -311,7 +322,7 @@ class SimpleMADDPGTraining:
         model = SimpleMADDPGModel(
             model_id,
             dim_info, 
-            self._cfg.buffer_size, 
+            self._cfg.buffer_capacity, 
             self._cfg.batch_size, 
             self._cfg.actor_lr, 
             self._cfg.critic_lr, 
@@ -355,7 +366,7 @@ class SimpleMADDPGTraining:
                 environment_implementation=self._environment_specs.implementation,
                 environment_config=EnvironmentConfig(
                     run_id=run_session.run_id,
-                    render=HUMAN_ACTOR_IMPL in (p1_params.implementation, p2_params.implementation),
+                    render=True,
                     seed=self._rng.integers(9999),
                 ),
                 actors=[p1_params, p2_params],

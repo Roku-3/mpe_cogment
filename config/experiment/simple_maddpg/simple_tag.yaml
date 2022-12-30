@@ -18,7 +18,7 @@ run:
   random_steps: 50000    # random steps before the agent start to learn
   tau: 0.02            # soft update parameter
   gamma: 0.95          # discount factor
-  buffer_size: 100000     # capacity of replay buffer
+  buffer_capacity: 100000     # capacity of replay buffer
   batch_size: 1024     # batch-size of replay buffer
   actor_lr: 0.01       # learning rate of actor
   critic_lr: 0.01      # learning rate of critic

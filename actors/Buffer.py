@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 
+import logging
+log = logging.getLogger(__name__)
 
 class Buffer:
     """replay buffer for each agent"""

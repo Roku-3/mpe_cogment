@@ -54,13 +54,12 @@ class Environment:
     async def impl(self, environment_session):
         actors = environment_session.get_active_actors()
 
-        # assert len(player_actors) == self.env_specs.num_players  # pylint: disable=no-member
-
         session_cfg = environment_session.config
-        pz_env = self.env_class.env()
+        pz_env = self.env_class.env(max_cycles=100)
         pz_env.reset(seed=session_cfg.seed)
         pz_observation, _pz_reward, _pz_done, _pz_truncate, _pz_info = pz_env.last()
         # pz_observation, _pz_reward, _pz_done, _pz_info = pz_env.last()
+
 
         # log.warning(f"pz_observation: {pz_observation}")
         # log.warning(f"observation_space: {pz_env.observation_space(current_player_pz_agent)}")
@@ -113,6 +112,9 @@ class Environment:
 
                 pz_observation, _pz_reward, _pz_done, _pz_truncate, _pz_info = pz_env.last()
 
+                if pz_env.agent_selection == "agent_0":
+                    log.warning(f"pz_reward: {_pz_reward} <- {pz_env.agent_selection}")
+
                 # log.warning(f"pz_observation: {pz_observation}")
                 # log.warning(f"_pz_reward: {_pz_reward}")
                 # log.warning(f"_pz_done: {_pz_done}")
@@ -128,7 +130,6 @@ class Environment:
                         "*",
                         Observation(
                             current_player = pz_env.agent_selection,
-                            # observation=pz_observation,
                             observation=serialize_ndarray(pz_observation),
                             reward=_pz_reward,
                             done=_pz_done,
